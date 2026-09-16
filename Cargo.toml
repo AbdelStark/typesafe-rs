@@ -1,0 +1,27 @@
+[workspace]
+resolver = "3"
+members = ["crates/typesafe-rs", "crates/typesafe-rs-mock"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/AbdelStark/typesafe-rs"
+homepage = "https://github.com/AbdelStark/typesafe-rs"
+authors = ["Abdel Bakhta"]
+publish = false
+
+[workspace.dependencies]
+bytes = "1"
+fastrand = "2"
+http = "1"
+httpdate = "1"
+indexmap = { version = "2", features = ["serde"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "http2"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", default-features = false }
+tracing = "0.1"
+url = "2"

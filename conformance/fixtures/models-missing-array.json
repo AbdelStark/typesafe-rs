@@ -1,0 +1,12 @@
+{
+  "id": "models-missing-array",
+  "endpoint": "models",
+  "script": [
+    { "status": 200, "body": { "data": [] } }
+  ],
+  "expect": {
+    "result": "error",
+    "error_kind": "unexpected_shape",
+    "attempts": 1
+  }
+}

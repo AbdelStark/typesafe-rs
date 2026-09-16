@@ -1,0 +1,21 @@
+{
+  "id": "unknown-answer-type",
+  "script": [
+    {
+      "status": 200,
+      "body": {
+        "model": "jev-latest",
+        "answers": {
+          "future": { "type": "spectrum", "bands": [0, 1] },
+          "urgent": { "type": "noul", "noul": 0.41 }
+        }
+      }
+    }
+  ],
+  "expect": {
+    "result": "ok",
+    "attempts": 1,
+    "unknown_answer_key": "future",
+    "noul": { "urgent": 0.41 }
+  }
+}

@@ -4,4 +4,8 @@
 .env
 .env.*
 !.env.example
+.claude/
+.idea/
+*.swp
+thoughts/
 

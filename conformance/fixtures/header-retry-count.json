@@ -1,0 +1,13 @@
+{
+  "id": "header-retry-count",
+  "config": { "retry": { "max_retries": 2, "backoff_initial_ms": 5, "backoff_jitter": 0 } },
+  "script": [
+    { "status": 503 },
+    { "status": 200, "body_file": "ok_noul.json" }
+  ],
+  "expect": {
+    "result": "ok",
+    "attempts": 2,
+    "retry_count_headers": [null, "1"]
+  }
+}

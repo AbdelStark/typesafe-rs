@@ -1,0 +1,19 @@
+{
+  "id": "env-precedence",
+  "env": {
+    "TYPESAFE_API_KEY": "env-key",
+    "TYPESAFE_DEFAULT_MODEL": "env-model"
+  },
+  "config": {
+    "api_key": "code-key"
+  },
+  "script": [
+    { "status": 200, "body_file": "ok_noul.json" }
+  ],
+  "expect": {
+    "result": "ok",
+    "attempts": 1,
+    "authorization": "Bearer code-key",
+    "request_model": "env-model"
+  }
+}

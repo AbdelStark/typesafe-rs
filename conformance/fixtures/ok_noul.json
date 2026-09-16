@@ -1,0 +1,7 @@
+{
+  "model": "jev-latest",
+  "answers": {
+    "urgent": { "type": "noul", "noul": 0.97 }
+  },
+  "usage": { "input_tokens": 10, "output_tokens": 1 }
+}

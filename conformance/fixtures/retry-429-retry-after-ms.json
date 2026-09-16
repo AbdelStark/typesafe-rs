@@ -1,0 +1,14 @@
+{
+  "id": "retry-429-retry-after-ms",
+  "config": { "retry": { "max_retries": 2 } },
+  "script": [
+    { "status": 429, "headers": { "retry-after-ms": "120" } },
+    { "status": 200, "body_file": "ok_noul.json" }
+  ],
+  "expect": {
+    "result": "ok",
+    "attempts": 2,
+    "delays_ms": [120],
+    "retry_count_headers": [null, "1"]
+  }
+}

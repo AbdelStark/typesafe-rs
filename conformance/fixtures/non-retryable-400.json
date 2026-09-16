@@ -1,0 +1,12 @@
+{
+  "id": "non-retryable-400",
+  "script": [
+    { "status": 400, "body": { "error": "bad request" } },
+    { "status": 200, "body_file": "ok_noul.json" }
+  ],
+  "expect": {
+    "result": "error",
+    "error_kind": "bad_request",
+    "attempts": 1
+  }
+}
