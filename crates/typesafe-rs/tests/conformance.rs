@@ -322,6 +322,9 @@ fn check_expect(
             if let Some(kind) = &fixture.expect.error_kind {
                 match (kind.as_str(), &err) {
                     ("bad_request", Error::Api(api)) if api.kind == ApiErrorKind::BadRequest => {}
+                    ("authentication", Error::Api(api))
+                        if api.kind == ApiErrorKind::Authentication => {}
+                    ("rate_limit", Error::Api(api)) if api.kind == ApiErrorKind::RateLimit => {}
                     ("unexpected_shape", Error::UnexpectedShape { .. }) => {}
                     other => return Err(format!("error_kind {kind} did not match {other:?}")),
                 }

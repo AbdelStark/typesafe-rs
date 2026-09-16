@@ -1,4 +1,8 @@
 //! Wire types for the System One API.
+//!
+//! [`Question`] is what you send; [`Answer`] / [`SystemOneResponse`] is what you
+//! get back. [`Entry`] is TypeSafe's `string | object | array | null` slot used
+//! for instructions and criteria.
 
 mod entry;
 mod models;

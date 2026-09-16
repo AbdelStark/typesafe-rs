@@ -33,6 +33,8 @@ Public surface:
 | Item | Role |
 |---|---|
 | `Client` | Async, `Arc` inner, `Send + Sync`, cheap `Clone` |
+| `ClientConfig::build` | Preferred constructor; `build_blocking` with feature `blocking` |
+| `Result<T>` | Alias for `std::result::Result<T, Error>` |
 | `BlockingClient` | Feature `blocking`; current-thread Tokio runtime |
 | `Backend` | `name()` + `system_one(&request, &opts)`; implemented for `Client` |
 | `Question::{noul,choice,score}` | Builders: `.when_true/.when_false`, `.option`, `.level` |

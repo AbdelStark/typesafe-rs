@@ -5,8 +5,10 @@
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
+#![warn(missing_debug_implementations)]
 
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -70,6 +72,32 @@ pub struct RecordedRequest {
     pub body: Option<Value>,
     /// Local time the mock accepted the request.
     pub received_at: Instant,
+}
+
+impl RecordedRequest {
+    /// Header value by lowercase name.
+    #[must_use]
+    pub fn header(&self, name: &str) -> Option<&str> {
+        self.headers
+            .get(&name.to_ascii_lowercase())
+            .map(String::as_str)
+    }
+}
+
+impl fmt::Debug for MockServer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("MockServer")
+            .field("url", &self.url)
+            .finish_non_exhaustive()
+    }
+}
+
+impl fmt::Debug for StubBuilder {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("StubBuilder")
+            .field("mounted", &self.mounted)
+            .finish_non_exhaustive()
+    }
 }
 
 impl MockServer {

@@ -1,0 +1,22 @@
+{
+  "id": "models-ok",
+  "endpoint": "models",
+  "script": [
+    {
+      "status": 200,
+      "body": {
+        "models": [
+          {
+            "name": "jev-latest",
+            "description": "Flagship",
+            "release_date": "2026-01-01"
+          }
+        ]
+      }
+    }
+  ],
+  "expect": {
+    "result": "ok",
+    "attempts": 1
+  }
+}

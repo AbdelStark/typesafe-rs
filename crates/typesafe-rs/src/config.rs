@@ -1,10 +1,11 @@
 use std::fmt;
 use std::time::Duration;
 
-use http::HeaderMap;
+use http::{HeaderMap, HeaderName, HeaderValue};
 use url::Url;
 
 use crate::error::Error;
+use crate::headers::is_protected;
 use crate::retry::RetryPolicy;
 
 /// Environment variable for the API key.
@@ -55,7 +56,7 @@ impl fmt::Debug for SecretString {
     }
 }
 
-/// Client configuration. Explicit values win over environment, then defaults **[parity]**.
+/// Client configuration. Explicit values win over environment, then defaults.
 #[derive(Clone, Debug)]
 pub struct ClientConfig {
     /// API key. Falls back to [`ENV_API_KEY`].
@@ -133,6 +134,40 @@ impl ClientConfig {
         self
     }
 
+    /// Insert a default header. Protected names (`Authorization`, `Accept`,
+    /// `User-Agent`, SDK identification, retry-count) are ignored.
+    pub fn header(mut self, name: impl AsRef<str>, value: impl AsRef<str>) -> Result<Self, Error> {
+        insert_user_header(&mut self.default_headers, name.as_ref(), value.as_ref())?;
+        Ok(self)
+    }
+
+    /// Replace extra default headers. Protected names are ignored at send time.
+    #[must_use]
+    pub fn default_headers(mut self, headers: HeaderMap) -> Self {
+        self.default_headers = headers;
+        self
+    }
+
+    /// Build an async [`Client`](crate::Client).
+    ///
+    /// # Errors
+    ///
+    /// Same as [`crate::Client::new`].
+    pub fn build(self) -> Result<crate::Client, Error> {
+        crate::Client::new(self)
+    }
+
+    /// Build a [`BlockingClient`](crate::BlockingClient).
+    ///
+    /// # Errors
+    ///
+    /// Same as [`crate::BlockingClient::new`].
+    #[cfg(feature = "blocking")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "blocking")))]
+    pub fn build_blocking(self) -> Result<crate::BlockingClient, Error> {
+        crate::BlockingClient::new(self)
+    }
+
     /// Fill unset fields from `lookup` (typically the process environment).
     ///
     /// Empty or whitespace-only values are ignored. Explicit fields are left unchanged.
@@ -199,6 +234,30 @@ impl CallOptions {
         self.model = Some(model.into());
         self
     }
+
+    /// Insert a per-call header. Protected names are ignored.
+    pub fn header(mut self, name: impl AsRef<str>, value: impl AsRef<str>) -> Result<Self, Error> {
+        insert_user_header(&mut self.headers, name.as_ref(), value.as_ref())?;
+        Ok(self)
+    }
+
+    /// Replace extra per-call headers. Protected names are ignored at send time.
+    #[must_use]
+    pub fn headers(mut self, headers: HeaderMap) -> Self {
+        self.headers = headers;
+        self
+    }
+}
+
+fn insert_user_header(map: &mut HeaderMap, name: &str, value: &str) -> Result<(), Error> {
+    let name = HeaderName::from_bytes(name.as_bytes())
+        .map_err(|err| Error::InvalidRequest(format!("invalid header name {name:?}: {err}")))?;
+    let value = HeaderValue::from_str(value)
+        .map_err(|err| Error::InvalidRequest(format!("invalid header value: {err}")))?;
+    if !is_protected(&name) {
+        map.insert(name, value);
+    }
+    Ok(())
 }
 
 pub(crate) fn trim_nonempty(value: String) -> Option<String> {
@@ -286,5 +345,27 @@ mod tests {
         let url = Url::parse("https://example.com/prefix/").unwrap();
         let stripped = strip_trailing_slashes(url);
         assert_eq!(stripped.as_str(), "https://example.com/prefix");
+    }
+
+    #[test]
+    fn header_builder_skips_protected_names() {
+        let cfg = ClientConfig::new()
+            .header("x-custom", "ok")
+            .unwrap()
+            .header("authorization", "Bearer stolen")
+            .unwrap();
+        assert_eq!(
+            cfg.default_headers
+                .get("x-custom")
+                .and_then(|v| v.to_str().ok()),
+            Some("ok")
+        );
+        assert!(cfg.default_headers.get("authorization").is_none());
+    }
+
+    #[test]
+    fn invalid_header_name_errors() {
+        let err = ClientConfig::new().header("not a name", "v").unwrap_err();
+        assert!(matches!(err, Error::InvalidRequest(_)));
     }
 }

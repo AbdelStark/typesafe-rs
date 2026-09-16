@@ -198,6 +198,45 @@ async fn preserves_base_url_path_prefix() {
 }
 
 #[tokio::test]
+async fn call_options_override_model() {
+    let mock = MockServer::start().await;
+    mock.on_system_one().respond(json!({ "urgent": noul(0.1) }));
+    let client = common::test_client(&mock);
+    let req = typesafe_rs::SystemOneRequest::new(json!("s"), sample_questions());
+    client
+        .system_one_with(&req, CallOptions::new().model("custom-model"))
+        .await
+        .unwrap();
+    let journal = mock.journal();
+    let model = journal[0]
+        .body
+        .as_ref()
+        .and_then(|b| b.get("model"))
+        .and_then(serde_json::Value::as_str);
+    assert_eq!(model, Some("custom-model"));
+}
+
+#[tokio::test]
+async fn config_build_sends_custom_header() {
+    let mock = MockServer::start().await;
+    mock.on_system_one().respond(json!({ "urgent": noul(0.1) }));
+    let client = ClientConfig::new()
+        .api_key("test")
+        .base_url(mock.url())
+        .default_model("jev-latest")
+        .retry(RetryPolicy::none())
+        .header("x-trace", "abc")
+        .unwrap()
+        .build()
+        .unwrap();
+    client.system_one("s", sample_questions()).await.unwrap();
+    assert_eq!(
+        mock.journal()[0].headers.get("x-trace").map(String::as_str),
+        Some("abc")
+    );
+}
+
+#[tokio::test]
 async fn captures_request_id_on_error() {
     let mock = MockServer::start().await;
     mock.on_system_one()

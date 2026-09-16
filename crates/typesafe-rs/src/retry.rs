@@ -70,10 +70,25 @@ impl FromIterator<u16> for StatusSet {
     }
 }
 
-/// Retry policy matching the official TypeSafe SDKs **[parity]**.
+/// Retry policy matching the official TypeSafe SDKs.
+///
+/// Default: 2 retries, 500 ms initial backoff, 5 s cap, 25% jitter, HTTP 408/429/5xx,
+/// connection errors, timeouts, and `retry-after-ms` / `Retry-After` up to 60 s.
 ///
 /// Struct-update from [`RetryPolicy::default`] so private fields stay initialized:
 /// `RetryPolicy { max_retries: 0, ..RetryPolicy::default() }`.
+///
+/// # Examples
+///
+/// ```
+/// use typesafe_rs::RetryPolicy;
+///
+/// let none = RetryPolicy::none();
+/// assert_eq!(none.max_retries, 0);
+///
+/// let conservative = RetryPolicy::conservative();
+/// assert!(!conservative.retry_timeouts);
+/// ```
 #[derive(Clone, Debug, PartialEq)]
 pub struct RetryPolicy {
     /// Maximum retries after the initial attempt. Default: 2.

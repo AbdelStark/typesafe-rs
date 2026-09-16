@@ -10,13 +10,13 @@ authors.workspace = true
 publish.workspace = true
 description = "Rust client for TypeSafe's System One API"
 readme = "../../README.md"
-keywords = ["typesafe", "sdk", "system-one", "ai"]
+keywords = ["typesafe", "sdk", "system-one", "ai", "http-client"]
 categories = ["api-bindings", "web-programming::http-client"]
 documentation = "https://docs.rs/typesafe-rs"
 
 [package.metadata.docs.rs]
 all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
+rustdoc-args = ["--cfg", "docsrs", "--generate-link-to-definition"]
 
 [features]
 default = ["rustls", "tracing"]
@@ -49,9 +49,20 @@ typesafe-rs-mock = { path = "../typesafe-rs-mock" }
 name = "quickstart"
 doc-scrape-examples = true
 
+[[example]]
+name = "triage"
+doc-scrape-examples = true
+
+[[example]]
+name = "models"
+
+[[example]]
+name = "blocking"
+required-features = ["blocking"]
+
 [[test]]
 name = "blocking"
 required-features = ["blocking"]
 
-[lints.rust]
-unsafe_code = "forbid"
+[lints]
+workspace = true

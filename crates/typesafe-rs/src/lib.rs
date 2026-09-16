@@ -33,10 +33,26 @@
 //!
 //! For tests, use [`typesafe-rs-mock`](https://docs.rs/typesafe-rs-mock) instead
 //! of the live API. See the `quickstart` example.
+//!
+//! # Crate features
+//!
+//! | Feature | Default | Enables |
+//! |---|---|---|
+//! | `rustls` | yes | TLS via rustls (platform verifier) |
+//! | `native-tls` | no | Platform TLS instead of, or in addition to, rustls |
+//! | `tracing` | yes | `typesafe.request` spans and `retry_scheduled` events |
+//! | `blocking` | no | [`BlockingClient`] |
+//!
+//! Enable `rustls` (the default) or `native-tls`. HTTPS will not compile with
+//! neither.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
+#![warn(missing_debug_implementations)]
+
+#[cfg(not(any(feature = "rustls", feature = "native-tls")))]
+compile_error!("Enable the `rustls` feature (default) or `native-tls`.");
 
 mod backend;
 #[cfg(feature = "blocking")]
@@ -51,6 +67,7 @@ pub mod types;
 
 pub use backend::Backend;
 #[cfg(feature = "blocking")]
+#[cfg_attr(docsrs, doc(cfg(feature = "blocking")))]
 pub use blocking::{BlockingClient, BlockingModels};
 pub use client::{Client, Models};
 pub use config::{
@@ -70,6 +87,9 @@ pub use url::Url;
 
 /// Crate version, used in `User-Agent` and `X-TypeSafe-SDK`.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// Result alias for this crate's [`Error`].
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// Build an ordered map of named questions.
 ///

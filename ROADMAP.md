@@ -20,6 +20,7 @@ Current status: **v0.1 shipped (MVP)** — 16 Sep 2026.
 - [x] Conformance fixtures + runner against the real client and mock
 - [x] `examples/quickstart.rs` against the mock
 - [x] Dual license MIT OR Apache-2.0
+- [x] GitHub Actions CI (fmt, clippy, tests, rustdoc, MSRV 1.85; no live API)
 
 ### Transport choice (v0.1)
 

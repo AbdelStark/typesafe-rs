@@ -36,6 +36,8 @@ fn blocking_system_one_and_models() {
 
     let models = client.models().list().unwrap();
     assert_eq!(models[0].name, "jev-latest");
+    assert_eq!(client.base_url(), &mock.url());
+    assert_eq!(client.default_model(), "jev-latest");
     client.warm_up().unwrap();
 
     drop(client);

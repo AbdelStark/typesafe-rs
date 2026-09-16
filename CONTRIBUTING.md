@@ -20,9 +20,10 @@ cargo test --workspace --all-features
 cargo fmt
 cargo clippy --all-targets --all-features -- -D warnings
 cargo run -p typesafe-rs --example quickstart
+cargo run -p typesafe-rs --example triage
 ```
 
-Do not add CI that calls `https://api.typesafe.ai`.
+GitHub Actions runs the same gates (fmt, clippy, tests, rustdoc, MSRV 1.85). Do not add CI that calls `https://api.typesafe.ai`.
 
 ## Layout
 

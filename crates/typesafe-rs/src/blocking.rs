@@ -8,6 +8,9 @@ use crate::types::{ModelCard, Questions, SystemOneRequest, SystemOneResponse};
 /// Blocking wrapper around [`Client`] using a current-thread Tokio runtime.
 ///
 /// Do not use this type from inside an existing Tokio runtime (`block_on` will panic).
+///
+/// Enable with `typesafe-rs = { version = "0.1", features = ["blocking"] }`.
+#[cfg_attr(docsrs, doc(cfg(feature = "blocking")))]
 #[derive(Debug)]
 pub struct BlockingClient {
     client: Client,
@@ -77,9 +80,16 @@ impl BlockingClient {
     pub fn default_model(&self) -> &str {
         self.client.default_model()
     }
+
+    /// Resolved API root, without a trailing slash.
+    #[must_use]
+    pub fn base_url(&self) -> &crate::Url {
+        self.client.base_url()
+    }
 }
 
 /// Blocking Models API resource.
+#[cfg_attr(docsrs, doc(cfg(feature = "blocking")))]
 #[derive(Debug)]
 pub struct BlockingModels<'a> {
     client: &'a BlockingClient,
@@ -89,5 +99,12 @@ impl BlockingModels<'_> {
     /// List models available to the account.
     pub fn list(&self) -> Result<Vec<ModelCard>, Error> {
         self.client.rt.block_on(self.client.client.models().list())
+    }
+
+    /// [`Self::list`] with per-call options.
+    pub fn list_with(&self, opts: &CallOptions) -> Result<Vec<ModelCard>, Error> {
+        self.client
+            .rt
+            .block_on(self.client.client.models().list_with(opts))
     }
 }

@@ -34,6 +34,24 @@ struct Inner {
 /// Asynchronous TypeSafe System One client.
 ///
 /// Cheap to clone (`Arc` internally) and safe to share across tasks (`Send + Sync`).
+///
+/// # Examples
+///
+/// ```no_run
+/// use typesafe_rs::{questions, Client, ClientConfig, Question};
+///
+/// # async fn run() -> typesafe_rs::Result<()> {
+/// let client = ClientConfig::new().api_key("sk-...").build()?;
+/// let response = client
+///     .system_one(
+///         "Help! My payouts have been failing for 3 days.",
+///         questions! { "urgent" => Question::noul("Does this convey urgency?") },
+///     )
+///     .await?;
+/// assert!(response.noul("urgent").is_some());
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Clone, Debug)]
 pub struct Client {
     inner: Arc<Inner>,
@@ -104,6 +122,15 @@ impl Client {
     }
 
     /// Evaluate `state` against `questions` using client defaults.
+    ///
+    /// `state` may be a string, object, or array. Question keys are returned on
+    /// [`SystemOneResponse::answers`](crate::SystemOneResponse::answers).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::InvalidRequest`] before any network call when the
+    /// question map is empty or a Choice/Score is under-specified. Network and
+    /// API failures use the rest of [`Error`].
     pub async fn system_one(
         &self,
         state: impl Serialize,
@@ -293,7 +320,7 @@ pub struct Models<'a> {
 impl Models<'_> {
     /// List models available to the account.
     ///
-    /// A body without a `models` array returns [`Error::UnexpectedShape`] **[parity]**.
+    /// A body without a `models` array returns [`Error::UnexpectedShape`].
     pub async fn list(&self) -> Result<Vec<ModelCard>, Error> {
         self.list_with(&CallOptions::default()).await
     }

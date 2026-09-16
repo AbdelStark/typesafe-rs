@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- `Result` type alias
+- `ClientConfig::build` / `build_blocking`, `header` builders, `CallOptions::header`
+- `Error::as_api`, `kind`, `is_rate_limited`, `is_auth`, `is_timeout`, `is_connection`
+- `BlockingClient::base_url` and `BlockingModels::list_with`
+- Examples: `triage`, `models`, `blocking`
+- Conformance fixtures for 500 retry, `Retry-After` seconds, 401, and successful `GET /v1/models`
+- CI: fmt, clippy, tests, rustdoc, MSRV 1.85
+
 ## 0.1.0 — 2026-09-16
 
 First release of the Rust client for TypeSafe's System One API.

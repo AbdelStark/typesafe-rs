@@ -20,7 +20,7 @@ pub enum Error {
     InvalidRequest(String),
     /// DNS, TLS, or connection failure (`APIConnectionError`).
     #[error("Connection error: {0}")]
-    Connection(TransportError),
+    Connection(#[source] TransportError),
     /// The attempt exceeded the configured timeout (`APITimeoutError`).
     #[error("Request timed out after {}ms.", after.as_millis())]
     Timeout {
@@ -82,6 +82,51 @@ impl Error {
             Self::Decode { meta, .. } | Self::UnexpectedShape { meta, .. } => Some(meta.attempts),
             _ => None,
         }
+    }
+
+    /// The API error when this is [`Self::Api`].
+    #[must_use]
+    pub fn as_api(&self) -> Option<&ApiError> {
+        match self {
+            Self::Api(err) => Some(err),
+            _ => None,
+        }
+    }
+
+    /// HTTP status class when this is an API error.
+    #[must_use]
+    pub fn kind(&self) -> Option<ApiErrorKind> {
+        self.as_api().map(|err| err.kind)
+    }
+
+    /// True when the API returned HTTP 429.
+    #[must_use]
+    pub fn is_rate_limited(&self) -> bool {
+        self.kind() == Some(ApiErrorKind::RateLimit)
+    }
+
+    /// True when the API returned HTTP 401.
+    #[must_use]
+    pub fn is_auth(&self) -> bool {
+        self.kind() == Some(ApiErrorKind::Authentication)
+    }
+
+    /// True when the attempt timed out.
+    #[must_use]
+    pub fn is_timeout(&self) -> bool {
+        matches!(self, Self::Timeout { .. })
+    }
+
+    /// True when a transport/connection failure occurred.
+    #[must_use]
+    pub fn is_connection(&self) -> bool {
+        matches!(self, Self::Connection(_))
+    }
+}
+
+impl From<ApiError> for Error {
+    fn from(err: ApiError) -> Self {
+        Self::Api(Box::new(err))
     }
 }
 
@@ -341,5 +386,27 @@ mod tests {
             ApiErrorKind::from_status(StatusCode::CONFLICT),
             ApiErrorKind::Conflict
         );
+    }
+
+    #[test]
+    fn helpers_classify_api_and_timeout() {
+        let err = Error::from(ApiError::from_response(
+            StatusCode::TOO_MANY_REQUESTS,
+            ErrorBody::Empty,
+            HeaderMap::new(),
+            "/v1/systemone",
+            2,
+        ));
+        assert!(err.is_rate_limited());
+        assert!(!err.is_auth());
+        assert_eq!(err.kind(), Some(ApiErrorKind::RateLimit));
+        assert_eq!(err.attempts(), Some(2));
+
+        let timeout = Error::Timeout {
+            after: Duration::from_secs(10),
+        };
+        assert!(timeout.is_timeout());
+        assert!(!timeout.is_connection());
+        assert!(timeout.as_api().is_none());
     }
 }

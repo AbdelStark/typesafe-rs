@@ -46,4 +46,6 @@ HTTP retry tests must use `typesafe-rs-mock`, not an in-memory stub of `Client`.
 
 **Not in v0.1:** tower layers, `evaluate_stream`, prepared requests, LLM backends, Cascade, WASM, cargo-deny CI, TypeScript parity script, live API tests.
 
+CI (fmt, clippy, tests, rustdoc, MSRV) lives in `.github/workflows/ci.yml`.
+
 Transport is **reqwest 0.13 + rustls** (see `ROADMAP.md`). Hyper 1.x remains a v0.2 option.

@@ -92,6 +92,9 @@ pub struct ScoreView<'a> {
 }
 
 /// Parsed `POST /v1/systemone` response.
+///
+/// Look up typed answers with [`noul`](Self::noul), [`choice`](Self::choice),
+/// and [`score`](Self::score). Unknown `type` values are [`Answer::Unknown`].
 #[derive(Clone, Debug, Deserialize)]
 pub struct SystemOneResponse {
     /// Model that produced the answers.

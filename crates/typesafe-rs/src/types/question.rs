@@ -11,6 +11,28 @@ pub const MAX_CHOICE_OPTIONS: usize = 255;
 pub type Questions = IndexMap<String, Question>;
 
 /// A typed System One question.
+///
+/// Build with [`Question::noul`], [`Question::choice`], and [`Question::score`].
+/// Choice needs at least two [`option`](Self::option)s; Score needs at least two
+/// [`level`](Self::level)s. Validation runs before the request is sent.
+///
+/// # Examples
+///
+/// ```
+/// use typesafe_rs::Question;
+///
+/// let urgent = Question::noul("Does this convey urgency?")
+///     .when_true("Explicitly time-sensitive")
+///     .when_false("No time pressure");
+/// let team = Question::choice("Which team?")
+///     .option("billing", "Payments")
+///     .option("technical", "Bugs");
+/// let mood = Question::score("How frustrated?")
+///     .level("Calm")
+///     .level("Frustrated")
+///     .level("Very angry");
+/// # let _ = (urgent, team, mood);
+/// ```
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum Question {
@@ -78,6 +100,8 @@ impl Question {
     }
 
     /// Describe the yes outcome of a Noul question.
+    ///
+    /// No-op if this is not a Noul question.
     #[must_use]
     pub fn when_true(self, description: impl Into<Entry>) -> Self {
         match self {
@@ -97,6 +121,8 @@ impl Question {
     }
 
     /// Describe the no outcome of a Noul question.
+    ///
+    /// No-op if this is not a Noul question.
     #[must_use]
     pub fn when_false(self, description: impl Into<Entry>) -> Self {
         match self {
@@ -116,6 +142,8 @@ impl Question {
     }
 
     /// Add a named option to a Choice question.
+    ///
+    /// No-op if this is not a Choice question.
     #[must_use]
     pub fn option(self, key: impl Into<String>, description: impl Into<Entry>) -> Self {
         match self {
@@ -134,6 +162,8 @@ impl Question {
     }
 
     /// Append a rubric level to a Score question.
+    ///
+    /// No-op if this is not a Score question.
     #[must_use]
     pub fn level(self, description: impl Into<Entry>) -> Self {
         match self {

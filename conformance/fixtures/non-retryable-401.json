@@ -1,0 +1,13 @@
+{
+  "id": "non-retryable-401",
+  "config": { "retry": { "max_retries": 2 } },
+  "script": [
+    { "status": 401, "body": { "error": "invalid api key" } },
+    { "status": 200, "body_file": "ok_noul.json" }
+  ],
+  "expect": {
+    "result": "error",
+    "error_kind": "authentication",
+    "attempts": 1
+  }
+}

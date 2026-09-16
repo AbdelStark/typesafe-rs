@@ -4,6 +4,7 @@ Rust client for [TypeSafe](https://typesafe.ai) [System One](https://docs.typesa
 
 [![Crates.io](https://img.shields.io/crates/v/typesafe-rs.svg)](https://crates.io/crates/typesafe-rs)
 [![Docs.rs](https://docs.rs/typesafe-rs/badge.svg)](https://docs.rs/typesafe-rs)
+[![CI](https://github.com/AbdelStark/typesafe-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/AbdelStark/typesafe-rs/actions/workflows/ci.yml)
 [![MSRV](https://img.shields.io/badge/MSRV-1.85+-blue.svg)](https://blog.rust-lang.org/)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
 
@@ -94,15 +95,14 @@ Call `client.warm_up().await?` once at process start if you want the first real 
 
 ```rust
 use std::time::Duration;
-use typesafe_rs::{Client, ClientConfig, RetryPolicy};
+use typesafe_rs::{ClientConfig, RetryPolicy};
 
-let client = Client::new(
-    ClientConfig::new()
-        .api_key("sk-...")
-        .default_model("jev-latest")
-        .timeout(Duration::from_secs(15))
-        .retry(RetryPolicy::conservative()),
-)?;
+let client = ClientConfig::new()
+    .api_key("sk-...")
+    .default_model("jev-latest")
+    .timeout(Duration::from_secs(15))
+    .retry(RetryPolicy::conservative())
+    .build()?;
 ```
 
 Per-call overrides: `CallOptions` (`timeout`, `retry`, `headers`, `model`) with `system_one_with`. `Authorization`, `Accept`, `User-Agent`, `X-TypeSafe-SDK`, `X-TypeSafe-Runtime`, and `X-TypeSafe-Retry-Count` cannot be overridden.
@@ -168,7 +168,7 @@ Unknown answer `type` values deserialize as `Answer::Unknown` instead of failing
 `typesafe-rs-mock` is an in-process HTTP server. Tests talk to a real `Client` over loopback, not a stub of the SDK.
 
 ```rust
-use typesafe_rs::{questions, Client, ClientConfig, Question};
+use typesafe_rs::{questions, ClientConfig, Question};
 use typesafe_rs_mock::{noul, MockServer};
 
 let mock = MockServer::start().await;
@@ -176,11 +176,10 @@ mock.on_system_one().respond(serde_json::json!({
     "urgent": noul(0.97),
 }));
 
-let client = Client::new(
-    ClientConfig::new()
-        .api_key("test")
-        .base_url(mock.url()),
-)?;
+let client = ClientConfig::new()
+    .api_key("test")
+    .base_url(mock.url())
+    .build()?;
 
 let response = client
     .system_one(
@@ -260,6 +259,7 @@ cargo test -p typesafe-rs --test conformance
 cargo test --workspace --all-features
 cargo fmt
 cargo clippy --all-targets --all-features -- -D warnings
+cargo run -p typesafe-rs --example triage
 ```
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md). Behaviour marked **[parity]** in [SPEC.md](./SPEC.md) must match the official Python and TypeScript SDKs.
