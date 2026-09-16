@@ -2,11 +2,11 @@
 
 Rust client for [TypeSafe](https://typesafe.ai) [System One](https://docs.typesafe.ai/api).
 
-[![Crates.io](https://img.shields.io/crates/v/typesafe-rs.svg)](https://crates.io/crates/typesafe-rs)
-[![Docs.rs](https://docs.rs/typesafe-rs/badge.svg)](https://docs.rs/typesafe-rs)
-[![CI](https://github.com/AbdelStark/typesafe-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/AbdelStark/typesafe-rs/actions/workflows/ci.yml)
-[![MSRV](https://img.shields.io/badge/MSRV-1.85+-blue.svg)](https://blog.rust-lang.org/)
-[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
+[![Crates.io](https://img.shields.io/crates/v/typesafe-rs?style=for-the-badge&logo=rust&logoColor=white)](https://crates.io/crates/typesafe-rs)
+[![Docs.rs](https://img.shields.io/docsrs/typesafe-rs?style=for-the-badge&logo=docsdotrs&logoColor=white)](https://docs.rs/typesafe-rs)
+[![CI](https://img.shields.io/github/actions/workflow/status/AbdelStark/typesafe-rs/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=CI)](https://github.com/AbdelStark/typesafe-rs/actions/workflows/ci.yml)
+[![MSRV](https://img.shields.io/badge/MSRV-1.85+-informational?style=for-the-badge&logo=rust&logoColor=white)](https://blog.rust-lang.org/)
+[![License](https://img.shields.io/crates/l/typesafe-rs?style=for-the-badge)](LICENSE)
 
 Evaluate a `state` against named questions (`noul`, `choice`, `score`) and get one typed answer per question.
 
