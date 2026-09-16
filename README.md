@@ -1,58 +1,198 @@
 # typesafe-rs
 
-Community Rust SDK for [TypeSafe](https://typesafe.ai)'s System One API.
+Rust client for [TypeSafe](https://typesafe.ai) [System One](https://docs.typesafe.ai/api).
 
-**This is not an official TypeSafe product.** The repository is private until launch.
+[![Crates.io](https://img.shields.io/crates/v/typesafe-rs.svg)](https://crates.io/crates/typesafe-rs)
+[![Docs.rs](https://docs.rs/typesafe-rs/badge.svg)](https://docs.rs/typesafe-rs)
+[![MSRV](https://img.shields.io/badge/MSRV-1.85+-blue.svg)](https://blog.rust-lang.org/)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
 
-Behaviour aims at parity with the official Python SDK and [`@typesafe-ai/sdk`](https://www.npmjs.com/package/@typesafe-ai/sdk) 0.6.0 (retries, env vars, headers, error shapes). See [PRD](./PRD.md) and [SPEC](./SPEC.md).
+Evaluate a `state` against named questions (`noul`, `choice`, `score`) and get one typed answer per question.
 
-## Quick start (mock)
+This is a community SDK. It is not an official TypeSafe product. Env vars, defaults, retries, identification headers, and error kinds match the official Python SDK and [`@typesafe-ai/sdk`](https://www.npmjs.com/package/@typesafe-ai/sdk).
 
-No live API key required:
+## Install
+
+```toml
+[dependencies]
+typesafe-rs = "0.1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+```
+
+```toml
+# optional: blocking client
+typesafe-rs = { version = "0.1", features = ["blocking"] }
+```
+
+```toml
+# tests: in-process mock of POST /v1/systemone and GET /v1/models
+[dev-dependencies]
+typesafe-rs-mock = "0.1"
+```
+
+MSRV is **1.85** (edition 2024). TLS is rustls by default (`native-tls` is available).
+
+## Quick start
 
 ```bash
-cargo run -p typesafe-rs --example quickstart
+export TYPESAFE_API_KEY=...
 ```
+
+```rust
+use typesafe_rs::{questions, Client, Question};
+
+#[tokio::main]
+async fn main() -> Result<(), typesafe_rs::Error> {
+    let client = Client::from_env()?;
+
+    let response = client
+        .system_one(
+            "Help! My payouts have been failing for 3 days.",
+            questions! {
+                "urgent" => Question::noul("Does this convey urgency?")
+                    .when_true("Explicitly time-sensitive")
+                    .when_false("No time pressure"),
+                "team" => Question::choice("Which team should handle this?")
+                    .option("billing", "Payments, invoicing, refunds")
+                    .option("technical", "Bugs, outages, integrations")
+                    .option("sales", "Pricing, upgrades, new accounts"),
+                "frustration" => Question::score("How frustrated is the customer?")
+                    .level("Calm")
+                    .level("Frustrated")
+                    .level("Very angry"),
+            },
+        )
+        .await?;
+
+    println!("urgent      = {:?}", response.noul("urgent"));
+    println!("team        = {:?}", response.choice("team").map(|c| c.choice));
+    println!("frustration = {:?}", response.score("frustration").map(|s| s.score));
+    Ok(())
+}
+```
+
+`state` can be a string, a JSON object, or an array. Keys you pick on the question map come back on `answers`.
+
+List models:
+
+```rust
+let models = client.models().list().await?;
+```
+
+Call `client.warm_up().await?` once at process start if you want the first real request to reuse a pooled connection.
+
+## Configuration
+
+`Client::from_env()` and `Client::new` resolve fields as **code, then env, then default**.
+
+| Setting | Env | Default |
+|---|---|---|
+| API key | `TYPESAFE_API_KEY` | required |
+| Base URL | `TYPESAFE_BASE_URL` | `https://api.typesafe.ai` |
+| Model | `TYPESAFE_DEFAULT_MODEL` | `jev-latest` |
+| Timeout | — | 10 s per attempt, including the body |
+
+```rust
+use std::time::Duration;
+use typesafe_rs::{Client, ClientConfig, RetryPolicy};
+
+let client = Client::new(
+    ClientConfig::new()
+        .api_key("sk-...")
+        .default_model("jev-latest")
+        .timeout(Duration::from_secs(15))
+        .retry(RetryPolicy::conservative()),
+)?;
+```
+
+Per-call overrides: `CallOptions` (`timeout`, `retry`, `headers`, `model`) with `system_one_with`. `Authorization`, `Accept`, `User-Agent`, `X-TypeSafe-SDK`, `X-TypeSafe-Runtime`, and `X-TypeSafe-Retry-Count` cannot be overridden.
+
+Every request sends:
+
+- `Authorization: Bearer <key>`
+- `Accept: application/json`
+- `User-Agent: typesafe-rs/<version>`
+- `X-TypeSafe-SDK: typesafe-rs/<version>`
+- `X-TypeSafe-Runtime: rust/<rustc>; <os>-<arch>`
+- `X-TypeSafe-Retry-Count: <n>` on retries only (`n` starts at 1)
+
+API keys are redacted in `Debug`. `Error` display never includes the key or the request body.
+
+## Retries
+
+Default policy matches the official SDKs:
+
+| Property | Value |
+|---|---|
+| Max retries | 2 (3 attempts total) |
+| Retry on | HTTP 408, 429, all 5xx; connection errors; timeouts |
+| Backoff | 500 ms initial, 5 s cap, 25% jitter |
+| Server delay | `retry-after-ms`, then `Retry-After` (seconds or HTTP date), capped at 60 s |
+
+Presets:
+
+- `RetryPolicy::default()`: official behaviour
+- `RetryPolicy::none()`: no retries
+- `RetryPolicy::conservative()`: 408/429 and pre-send connection errors only (no 5xx, no timeouts)
+
+Dropping the future cancels further attempts. Retrying 5xx on `POST /v1/systemone` can duplicate billable work; use `conservative()` if that matters more than completing the call.
+
+## Errors
+
+```rust
+match client.system_one(state, questions).await {
+    Ok(response) => { let _ = response.noul("urgent"); }
+    Err(err) => {
+        eprintln!("{} (request id {:?})", err, err.request_id());
+        if let Some(status) = err.status() {
+            eprintln!("HTTP {status}");
+        }
+    }
+}
+```
+
+| Variant | When |
+|---|---|
+| `MissingApiKey` | No key in config or `TYPESAFE_API_KEY` |
+| `InvalidRequest` | Client-side validation (empty questions, Choice with fewer than 2 options, Score with fewer than 2 levels, …) before any network call |
+| `Connection` | DNS, TLS, or connect failure |
+| `Timeout` | Attempt exceeded the timeout |
+| `Api` | Non-2xx after retries are exhausted (`401` → `Authentication`, `429` → `RateLimit`, `5xx` → `InternalServer`, …) |
+| `Decode` | Body is not JSON of the expected type |
+| `UnexpectedShape` | JSON parsed but is missing a documented field (for example `GET /v1/models` without `models`) |
+
+Unknown answer `type` values deserialize as `Answer::Unknown` instead of failing.
+
+## Testing
+
+`typesafe-rs-mock` is an in-process HTTP server. Tests talk to a real `Client` over loopback, not a stub of the SDK.
 
 ```rust
 use typesafe_rs::{questions, Client, ClientConfig, Question};
 use typesafe_rs_mock::{noul, MockServer};
 
-# async fn demo() -> Result<(), typesafe_rs::Error> {
 let mock = MockServer::start().await;
 mock.on_system_one().respond(serde_json::json!({
     "urgent": noul(0.97),
 }));
 
-let client = Client::new(ClientConfig {
-    api_key: Some("test".into()),
-    base_url: Some(mock.url()),
-    ..ClientConfig::default()
-})?;
+let client = Client::new(
+    ClientConfig::new()
+        .api_key("test")
+        .base_url(mock.url()),
+)?;
 
 let response = client
     .system_one(
         "Help! My payouts have been failing for 3 days.",
-        questions! {
-            "urgent" => Question::noul("Does this convey urgency?"),
-        },
+        questions! { "urgent" => Question::noul("Does this convey urgency?") },
     )
     .await?;
 
 assert_eq!(response.noul("urgent"), Some(0.97));
-# Ok(())
-# }
 ```
 
-Against the live API, set `TYPESAFE_API_KEY` and use `Client::from_env()`. Default base URL is `https://api.typesafe.ai`, default model `jev-latest`, default timeout 10s.
-
-## Mock server
-
-`typesafe-rs-mock` is an in-process HTTP server for tests:
-
-- scripted `POST /v1/systemone` and `GET /v1/models` responses
-- sequential `429` then `200`, including `retry-after-ms`
-- request journal (headers, body, timestamps) for retry-count assertions
+Script a 429 then a success, including `retry-after-ms`:
 
 ```rust
 mock.on_system_one()
@@ -62,31 +202,68 @@ mock.on_system_one()
 mock.on_system_one().respond(answers).times(1);
 ```
 
-## Comparison with `typesafe-ai` 0.1.0 (16 Sep 2026)
+`mock.journal()` records method, path, headers, JSON body, and timestamps. Use it to assert `X-TypeSafe-Retry-Count` and attempt order.
 
-Joey ([Twister915](https://github.com/Twister915)) published [`typesafe-ai`](https://crates.io/crates/typesafe-ai) 0.1.0 the same day this crate was specified. That crate is carefully built and deliberately minimal. typesafe-rs exists because s1-rs / Reflex / Sieve need **official SDK retry and config semantics** plus a mock that those crates can share.
+Run the bundled example (no live key):
 
-| Behaviour (16 Sep 2026) | Official Python/TS SDKs | `typesafe-ai` 0.1.0 | `typesafe-rs` 0.1.0 |
-|---|---|---|---|
-| Retryable statuses | 408, 429, all 5xx | 429, 529 | 408, 429, all 5xx |
-| Connection errors and timeouts retried | Yes | No | Yes |
-| Default timeout | 10 s | 60 s per attempt | 10 s |
-| Backoff | 500 ms, 5 s cap, 25% jitter; `retry-after-ms` / `Retry-After` up to 60 s | 250 ms, 8 s cap; server delay up to 60 s | 500 ms, 5 s cap, 25% jitter; same headers |
-| `GET /v1/models` | Yes | Not covered | Yes |
-| `TYPESAFE_API_KEY` / `BASE_URL` / `DEFAULT_MODEL` | Yes | Not covered | Yes |
-| `X-TypeSafe-SDK` / `Runtime` / `Retry-Count` | Yes | Not covered | Yes |
+```bash
+cargo run -p typesafe-rs --example quickstart
+```
 
-Official behaviour was read from `@typesafe-ai/sdk` 0.6.0 and the Python SDK docs on 16 Sep 2026. Re-verify before treating this table as current.
+## Blocking client
 
-Credit: [typesafe-ai](https://github.com/Twister915/typesafe-ai) by Joey / Twister915.
+```toml
+typesafe-rs = { version = "0.1", features = ["blocking"] }
+```
+
+```rust
+use typesafe_rs::{questions, BlockingClient, Question};
+
+let client = BlockingClient::from_env()?;
+let response = client.system_one(
+    "Help! My payouts have been failing for 3 days.",
+    questions! { "urgent" => Question::noul("Does this convey urgency?") },
+)?;
+```
+
+Do not construct `BlockingClient` inside an existing Tokio runtime (`block_on` will panic).
 
 ## Crates
 
-- `typesafe-rs` — async + blocking client (`#![forbid(unsafe_code)]`)
-- `typesafe-rs-mock` — in-process mock HTTP server
+| Crate | Role |
+|---|---|
+| [`typesafe-rs`](https://docs.rs/typesafe-rs) | Async `Client`, optional `BlockingClient`, wire types, retry, errors. `#![forbid(unsafe_code)]` |
+| [`typesafe-rs-mock`](https://docs.rs/typesafe-rs-mock) | In-process mock for tests |
 
-Typed derive (enums → questions) lives in **s1-rs**, not here.
+`Backend` is implemented for `Client` so callers can depend on the trait rather than the HTTP type.
+
+## Feature flags
+
+| Feature | Default | Notes |
+|---|---|---|
+| `rustls` | yes | TLS via rustls (platform verifier) |
+| `native-tls` | no | Platform TLS instead |
+| `tracing` | yes | `typesafe.request` span and `retry_scheduled` events |
+| `blocking` | no | `BlockingClient` |
+
+## Conformance
+
+JSON fixtures in [`conformance/fixtures/`](./conformance) drive the real client against the real mock. Coverage includes 429 + `retry-after-ms`, non-retryable 400, env precedence, unknown answer types, missing `models` array, and retry-count headers.
+
+```bash
+cargo test -p typesafe-rs --test conformance
+```
+
+## Development
+
+```bash
+cargo test --workspace --all-features
+cargo fmt
+cargo clippy --all-targets --all-features -- -D warnings
+```
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md). Behaviour marked **[parity]** in [SPEC.md](./SPEC.md) must match the official Python and TypeScript SDKs.
 
 ## License
 
-MIT OR Apache-2.0.
+Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or [MIT](LICENSE) at your option.

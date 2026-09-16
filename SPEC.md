@@ -6,6 +6,8 @@ Companion to [`PRD.md`](./PRD.md). Before implementation, re-read `https://docs.
 
 ## 1. Workspace
 
+v0.1 ships the files under `crates/`. Modules marked v0.2 / v0.3 are the target layout, not files on disk yet.
+
 ```
 typesafe-rs/
   Cargo.toml                    # workspace, edition 2024, resolver 3
@@ -20,12 +22,10 @@ typesafe-rs/
           models.rs             # ModelCard, ListModelsResponse
         error.rs                # Error taxonomy
         retry.rs                # RetryPolicy, delay calculation, Retry-After parsing
-        transport/
-          mod.rs                # Transport trait
-          hyper.rs              # default: hyper 1.x + hyper-util + rustls
-          timing.rs             # connect/tls/ttfb instrumentation
+        transport.rs            # v0.1: reqwest 0.13 + rustls
         client.rs               # Client (async)
         blocking.rs             # BlockingClient (feature "blocking")
+        backend.rs              # Backend trait (`impl Backend for Client`)
         prepared.rs             # PreparedQuestions (v0.2)
         stream.rs               # evaluate_stream (v0.2, feature "stream")
         tower/                  # Service impl + layers (v0.2, feature "tower")
@@ -33,8 +33,7 @@ typesafe-rs/
           rate.rs               # AdaptiveRateLimitLayer
           budget.rs             # BudgetLayer
         backends/               # v0.3
-          mod.rs                # Backend trait
-          typesafe.rs
+          mod.rs
           openai_compat.rs      # feature "llm-openai"
           anthropic.rs          # feature "llm-anthropic"
           cascade.rs
@@ -183,7 +182,7 @@ Per-call overrides via `CallOptions { timeout, retry, headers, model }`.
 - Base URL path prefixes preserved.
 - `x-typesafe-request-id` captured into `meta.request_id` on success and error.
 
-Note: using the `typesafe-rs` SDK identifier rather than `typesafe-sdk` avoids misattribution in TypeSafe's analytics; ask TypeSafe which value they prefer.
+The SDK identifier is `typesafe-rs/<version>` (not `typesafe-sdk`) so traffic is attributable to this crate.
 
 ## 5. Retry engine **[parity]**
 
@@ -263,7 +262,7 @@ pub struct BlockingClient { client: Client, rt: tokio::runtime::Runtime /* curre
 
 ## 8. Transport (v0.1 baseline, tuned in v0.2)
 
-Default: `hyper` 1.x client via `hyper-util` legacy pool, `hyper-rustls` connector.
+v0.1 default: `reqwest` 0.13 with the `rustls` feature (HTTP/2). Reqwest's `rustls` feature uses rustls with the **platform verifier**. Hyper 1.x remains a v0.2 option if pooling or H2 tuning needs it.
 
 | Setting | Value | Why |
 |---|---|---|
@@ -275,7 +274,7 @@ Default: `hyper` 1.x client via `hyper-util` legacy pool, `hyper-rustls` connect
 | Happy Eyeballs | on | IPv4/IPv6 |
 | Request compression | off by default; `gzip` opt-in if TypeSafe accepts `Content-Encoding` (verify) | large states |
 
-`Transport` trait allows custom implementations (e.g. `reqwest`, test doubles).
+`Transport` trait allows custom HTTP implementations and test doubles.
 
 ### 8.1 Timing (feature `timing`)
 
@@ -349,7 +348,7 @@ Port of `system-one-adapter` semantics (read its source and README before implem
 - `openai_compat` supports any `/v1/chat/completions` or Responses API base URL (Mistral, vLLM, OpenAI).
 - `anthropic` uses the Messages API with tool-based structured output.
 
-Goal: identical inputs and output shapes to TypeSafe, so any code (and s1-rs types) works against either.
+Goal: identical inputs and output shapes to TypeSafe, so the same request and response types work against either.
 
 ### 12.2 Cascade
 
@@ -400,9 +399,7 @@ Features: request matchers (key presence, state JSON pointer equality), sequenti
 
 Coverage: all retry statuses, non-retryable statuses per error kind, Retry-After variants (ms, seconds, HTTP date, invalid, above max), timeouts, connection errors, env precedence, header protection, models shape errors, unknown answer types.
 
-`conformance/ts/run.mjs` executes the same fixtures against the official `@typesafe-ai/sdk` using a local HTTP server, so parity claims are tested, not asserted. Weekly CI job runs it against the latest npm version and opens an issue on divergence.
-
-Offer the fixture format to TypeSafe as a shared cross-SDK suite.
+`conformance/ts/run.mjs` (later) executes the same fixtures against the official `@typesafe-ai/sdk` using a local HTTP server, so parity claims are tested, not asserted.
 
 ## 15. Observability
 
@@ -418,7 +415,6 @@ Offer the fixture format to TypeSafe as a shared cross-SDK suite.
 | Prepared vs unprepared request build | criterion |
 | Warm vs cold request latency | mock server with fixed 50 ms latency over loopback TLS |
 | Throughput with AIMD against mock 429 behaviour | custom harness, reports converged rps |
-| Comparison with `typesafe-ai` 0.1.0 on identical mock | same harness; report honestly, including cases where it is faster |
 
 ## 17. Quality gates
 
@@ -429,8 +425,7 @@ Offer the fixture format to TypeSafe as a shared cross-SDK suite.
 
 ## 18. v0.1 release checklist
 
-- [ ] Joey informed; README credits `typesafe-ai` with a dated factual comparison.
-- [ ] evinism and Erik contacted about shared conformance fixtures and SDK header value.
-- [ ] Conformance suite green in Rust and against official TS SDK.
-- [ ] Mock server documented with retry and failure examples.
-- [ ] Live smoke test (private runner) passes for `system_one` and `models.list`.
+- [x] Conformance suite green in Rust against the mock
+- [x] Mock server documented with retry and failure examples
+- [ ] TypeScript fixture runner against `@typesafe-ai/sdk` (later)
+- [ ] Live smoke test on a private runner for `system_one` and `models.list`

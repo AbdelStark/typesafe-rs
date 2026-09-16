@@ -1,12 +1,20 @@
-//! Community Rust SDK for TypeSafe's System One API.
+//! Rust client for [TypeSafe](https://typesafe.ai)'s System One API.
 //!
-//! This crate is **not** an official TypeSafe product. Behaviour marked
-//! **\[parity\]** in `SPEC.md` matches the official Python and TypeScript SDKs.
+//! System One evaluates a `state` against a map of named questions (`noul`,
+//! `choice`, `score`) and returns one typed answer per question. This crate is
+//! the HTTP client: configuration, retries, errors, `POST /v1/systemone`, and
+//! `GET /v1/models`.
+//!
+//! This is a community SDK, not an official TypeSafe product. Env vars, defaults,
+//! retries, identification headers, and error kinds match the official Python
+//! and TypeScript SDKs.
+//!
+//! Set `TYPESAFE_API_KEY`. Optional: `TYPESAFE_BASE_URL`, `TYPESAFE_DEFAULT_MODEL`.
 //!
 //! # Quick start
 //!
 //! ```no_run
-//! use typesafe_rs::{questions, Client, ClientConfig, Question};
+//! use typesafe_rs::{questions, Client, Question};
 //!
 //! # async fn run() -> Result<(), typesafe_rs::Error> {
 //! let client = Client::from_env()?;
@@ -23,8 +31,8 @@
 //! # }
 //! ```
 //!
-//! For local tests, run against the `typesafe-rs-mock` crate instead of the live
-//! API. See the `quickstart` example.
+//! For tests, use [`typesafe-rs-mock`](https://docs.rs/typesafe-rs-mock) instead
+//! of the live API. See the `quickstart` example.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]

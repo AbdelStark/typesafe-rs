@@ -1,7 +1,7 @@
-//! In-process mock HTTP server for [`typesafe-rs`](https://docs.rs/typesafe-rs).
+//! In-process HTTP mock for [`typesafe-rs`](https://docs.rs/typesafe-rs).
 //!
-//! Script sequential responses, inject `429` + `retry-after-ms`, and inspect the
-//! request journal. The server speaks HTTP/1.1 on `127.0.0.1`.
+//! Binds `127.0.0.1:0`, scripts `POST /v1/systemone` and `GET /v1/models`, and
+//! records a request journal. Tests use a real `Client` over loopback.
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

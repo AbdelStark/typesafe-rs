@@ -34,7 +34,7 @@ Reqwest 0.13's `rustls` feature uses rustls with the **platform verifier** rathe
 - [ ] Prepared requests (serialize questions once, splice `state`)
 - [ ] `tower::Service` + `AdaptiveRateLimitLayer` + `BudgetLayer`
 - [ ] `evaluate_stream` with bounded concurrency (feature `stream`)
-- [ ] Published benches vs `typesafe-ai` 0.1.0 on the same mock
+- [ ] Published benches (encode/decode, prepared vs unprepared, warm vs cold)
 - [ ] `cargo deny` / MSRV CI (no live API)
 
 ## v0.3 — LLM backends and Cascade
@@ -48,10 +48,9 @@ Reqwest 0.13's `rustls` feature uses rustls with the **platform verifier** rathe
 - [ ] WASM target (v0.4 stretch)
 - [ ] TypeScript fixture runner (`conformance/ts/run.mjs`) against `@typesafe-ai/sdk`
 - [ ] Live API smoke tests on a private runner
-- [ ] Outreach to Joey / evinism / Erik (deferred while the repo is private)
 
 ## Explicit non-goals
 
-- Typed derive layer (that is `s1-rs`)
+- Typed derive layer (enums → questions)
 - Hidden hedged or duplicate requests by default
 - Endpoints TypeSafe does not document

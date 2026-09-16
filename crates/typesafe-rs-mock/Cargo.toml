@@ -8,8 +8,8 @@ repository.workspace = true
 homepage.workspace = true
 authors.workspace = true
 publish.workspace = true
-description = "In-process mock HTTP server for typesafe-rs"
-readme = "../../README.md"
+description = "In-process HTTP mock for the typesafe-rs client"
+readme = "README.md"
 keywords = ["typesafe", "mock", "testing"]
 categories = ["development-tools::testing"]
 

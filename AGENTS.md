@@ -1,8 +1,6 @@
 # typesafe-rs
 
-Community project, private until launch.
-
-Read `PRD.md` and `SPEC.md` before writing code. Implementation happens in this repository.
+Rust SDK for TypeSafe's System One API. Read `SPEC.md` before changing behaviour marked **[parity]**.
 
 ## Build and test
 
@@ -16,7 +14,7 @@ cargo run -p typesafe-rs --example quickstart
 
 MSRV is **1.85** (edition 2024). Use the stable toolchain only.
 
-Live TypeSafe API smoke tests are **out of scope** for v0.1. Do not add CI that calls `https://api.typesafe.ai`.
+Do not add CI that calls `https://api.typesafe.ai`.
 
 ## Crate map
 
@@ -25,18 +23,16 @@ Live TypeSafe API smoke tests are **out of scope** for v0.1. Do not add CI that 
 | `typesafe-rs` | `crates/typesafe-rs` | SDK (`Client`, `BlockingClient`, wire types, retry, errors). `#![forbid(unsafe_code)]` |
 | `typesafe-rs-mock` | `crates/typesafe-rs-mock` | In-process HTTP mock (`MockServer`) |
 
-Downstream typed derive belongs in **s1-rs**, not here.
+Typed derive over enums is out of scope.
 
 ## Parity
 
-Behaviour marked **[parity]** in `SPEC.md` must match the official Python SDK and `@typesafe-ai/sdk` 0.6.0:
+**[parity]** in `SPEC.md` must match the official Python SDK and `@typesafe-ai/sdk` 0.6.0:
 
 - Env: `TYPESAFE_API_KEY`, `TYPESAFE_BASE_URL`, `TYPESAFE_DEFAULT_MODEL`
 - Defaults: timeout 10s, model `jev-latest`, base `https://api.typesafe.ai`
 - Retry: max 2, 500ms initial, 5s cap, 25% jitter; 408/429/5xx; connection errors and timeouts; `retry-after-ms` then `Retry-After` up to 60s
 - Headers: `Authorization`, `Accept`, `User-Agent: typesafe-rs/<version>`, `X-TypeSafe-SDK`, `X-TypeSafe-Runtime: rust/<rustc>; <os>-<arch>`, `X-TypeSafe-Retry-Count` on retries only (n starting at 1)
-
-Do **not** treat the community crate `typesafe-ai` as the parity target.
 
 ## Fixtures
 
@@ -48,8 +44,6 @@ HTTP retry tests must use `typesafe-rs-mock`, not an in-memory stub of `Client`.
 
 **Shipped in v0.1:** async + blocking clients, `Backend` trait, mock server, conformance fixtures, `GET /v1/models`, `POST /v1/systemone`.
 
-**Not in v0.1:** tower layers, `evaluate_stream`, prepared requests, LLM backends, Cascade, WASM, cargo-deny CI, TypeScript parity script, live API tests, outreach.
+**Not in v0.1:** tower layers, `evaluate_stream`, prepared requests, LLM backends, Cascade, WASM, cargo-deny CI, TypeScript parity script, live API tests.
 
 Transport is **reqwest 0.13 + rustls** (see `ROADMAP.md`). Hyper 1.x remains a v0.2 option.
-
-Do not add TypeSafe job-hunt or campaign material to this repo.

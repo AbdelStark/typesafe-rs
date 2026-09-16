@@ -26,5 +26,4 @@ v0.1 coverage:
 
 A TypeScript runner that executes the same fixtures against `@typesafe-ai/sdk`
 is **not** in v0.1. The intended layout is `conformance/ts/run.mjs` using a local
-HTTP server, run weekly against the latest npm version. Offer this fixture format
-to TypeSafe as a shared cross-SDK suite when the crate is public.
+HTTP server, run against the latest npm version.

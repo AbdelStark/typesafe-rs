@@ -7,8 +7,8 @@ use crate::types::{SystemOneRequest, SystemOneResponse};
 
 /// Pluggable System One evaluator.
 ///
-/// A thin v0.1 surface so downstream crates (for example `s1-rs`) can depend on
-/// a trait rather than a concrete HTTP client. LLM and Cascade backends land in v0.3.
+/// [`Client`](crate::Client) implements this so callers can depend on the trait
+/// rather than the HTTP type. Additional backends (LLM, Cascade) are planned.
 pub trait Backend: Send + Sync {
     /// Stable backend name, e.g. `"typesafe"`.
     fn name(&self) -> &str;
