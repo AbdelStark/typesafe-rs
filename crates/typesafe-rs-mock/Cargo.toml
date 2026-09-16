@@ -12,6 +12,7 @@ description = "In-process HTTP mock for the typesafe-rs client"
 readme = "README.md"
 keywords = ["typesafe", "mock", "testing"]
 categories = ["development-tools::testing"]
+documentation = "https://docs.rs/typesafe-rs-mock"
 
 [dependencies]
 axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio"] }

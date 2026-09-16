@@ -33,6 +33,6 @@ let response = client
 assert_eq!(response.noul("urgent"), Some(0.97));
 ```
 
-Script sequential failures, inject latency, and inspect `mock.journal()` for headers and bodies. See the workspace [README](../../README.md#testing).
+Script sequential failures, inject latency, and inspect `mock.journal()` for headers and bodies. See the [typesafe-rs README](https://github.com/AbdelStark/typesafe-rs#testing).
 
 Licensed under MIT OR Apache-2.0.

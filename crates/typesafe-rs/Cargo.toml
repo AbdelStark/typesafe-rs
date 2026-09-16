@@ -43,7 +43,7 @@ url = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time", "net"] }
-typesafe-rs-mock = { path = "../typesafe-rs-mock" }
+typesafe-rs-mock = { path = "../typesafe-rs-mock", version = "0.1.0" }
 
 [[example]]
 name = "quickstart"

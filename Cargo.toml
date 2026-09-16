@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/AbdelStark/typesafe-rs"
 homepage = "https://github.com/AbdelStark/typesafe-rs"
 authors = ["Abdel Bakhta"]
-publish = false
+publish = true
 
 [workspace.dependencies]
 bytes = "1"
